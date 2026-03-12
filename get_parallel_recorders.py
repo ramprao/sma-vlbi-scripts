@@ -16,10 +16,10 @@ def get_args():
     parser = argparse.ArgumentParser(description="Example of mutually exclusive true/false arguments.")
     group = parser.add_mutually_exclusive_group(required=True)
 
-    group.add_argument("--status", action="store_true", help="Enable the feature (sets feature_status to True)")
-    group.add_argument("--packets", action="store_true", help="Enable the feature (sets feature_status to True)")
-    group.add_argument("--hammer", action="store_true", help="Disable the feature (sets feature_status to False)")
-    group.add_argument("--M6log", action="store_true", help="Disable the feature (sets feature_status to False)")
+    group.add_argument("--status", action="store_true", help="Looks at the status of the recorders")
+    group.add_argument("--packets", action="store_true", help="Checks if ethernet packets are arriving at all 4 ethernet interfaces on each recorder")
+    group.add_argument("--hammer", action="store_true", help="Looks at the last few lines of the Hammer Log file")
+    group.add_argument("--M6log", action="store_true", help="Looks at the M6log")
     args = parser.parse_args()
     return args
 
@@ -36,7 +36,7 @@ def get_recorder_hammer_logs():
     loop_hammer_output(output)
 
 def get_recorder_M6log_filename():
-    output = client.run_command('ls -tr obs/logs | tail -1')
+    output = client.run_command('ls -tr /home/oper/M6*.log | tail -1')
     loop_M6log_output(output)
 
 def loop_output(output):
@@ -62,7 +62,7 @@ def loop_M6log_output(output):
         for line in host_out.stdout:
             client2 = ParallelSSHClient([host_out.host], pkey=pkey_path, user=user)
             log_file_name = line.split()[0]
-            output2 = client2.run_command('tail -2 '+log_file_name)
+            output2 = client2.run_command('tail -20 '+log_file_name)
             for host_out2 in output2:
                 for line2 in host_out2.stdout:
                     print(f"{host_out2.host}: {log_file_name} {line2}")
@@ -75,3 +75,5 @@ if args.packets:
     get_recorder_packets_status()
 if args.hammer:
     get_recorder_hammer_logs()
+if args.M6log:
+    get_recorder_M6log_filename()
